@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en"><!-- custom -->
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Non Player Coin ($NPC) on Solana</title>
+<meta name="description" content="The grey background character of the internet. Same job, same face, same dialogue. It is what it is.">
+<meta property="og:title" content="Non Player Coin ($NPC)"><meta property="og:description" content="The grey background character of the internet. Same job, same face, same dialogue. It is what it is.">
+<meta property="og:image" content="banner.jpg"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g0:#0f0f0f;--g1:#2a2a2a;--g2:#5a5a5a;--g3:#8c8c8c;--g4:#b9b9b9;--g5:#d4d4d4;--g6:#f0f0f0;--green:#2FCB63;--white:#fff;
+  --sy:0;--mx:0;--my:0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--g5);color:var(--g0);font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace;font-size:16px;line-height:1.6;overflow-x:hidden}
+h1,h2,h3,.disp{font-family:'Rubik Mono One',ui-monospace,monospace;font-weight:400;line-height:1.05}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+button{font:inherit;cursor:pointer}
+.px{transform:translate3d(calc(var(--mx) * var(--d,0) * 1px), calc(var(--sy) * var(--sp,0) * -1px + var(--my) * var(--d,0) * 1px), 0)}
+
+/* ===== default world (fixed) ===== */
+.world{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(to bottom,#c9c9c9 0%,#d9d9d9 55%,#bdbdbd 100%)}
+.sun{position:absolute;top:8vh;left:50%;width:140px;height:140px;margin-left:-70px;border-radius:50%;background:#e6e6e6;border:4px solid #a9a9a9}
+.blocks{position:absolute;left:-10%;width:120%;bottom:0;height:var(--h);
+  background-image:
+   linear-gradient(to right,var(--c) 0 var(--w),transparent var(--w) calc(var(--w) + var(--gap))),
+   linear-gradient(to right,transparent 0 10px,rgba(255,255,255,.18) 10px 16px,transparent 16px 34px,rgba(255,255,255,.18) 34px 40px,transparent 40px);
+  background-size:calc(var(--w) + var(--gap)) 100%, 48px 100%;
+  mask-image:linear-gradient(to top,#000 60%,transparent);-webkit-mask-image:linear-gradient(to top,#000 60%,transparent)}
+.blocks.b1{--c:#b0b0b0;--w:70px;--gap:22px;--h:42vh;opacity:.7}
+.blocks.b2{--c:#8e8e8e;--w:110px;--gap:40px;--h:30vh}
+.blocks.b3{--c:#6a6a6a;--w:160px;--gap:70px;--h:19vh}
+.crowd{position:absolute;left:-10%;width:120%;bottom:0;height:var(--s);background:url("logo.png") repeat-x 0 0/var(--s) var(--s);opacity:var(--o);
+  mask-image:linear-gradient(to top,#000 40%,transparent);-webkit-mask-image:linear-gradient(to top,#000 40%,transparent)}
+.crowd.c1{--s:70px;--o:.25;bottom:12vh}
+.crowd.c2{--s:110px;--o:.4;bottom:3vh}
+.crowd.c3{--s:170px;--o:.55;bottom:-30px}
+.ground{position:absolute;left:0;right:0;bottom:0;height:5vh;background:repeating-linear-gradient(90deg,#444 0 40px,#555 40px 80px)}
+
+.page{position:relative;z-index:1}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+
+/* HUD nav */
+.hud{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:10px 18px;background:rgba(15,15,15,.92);color:var(--g6);border-bottom:3px solid var(--white);font-size:13px}
+.hud .brand{display:flex;align-items:center;gap:10px;font-family:'Rubik Mono One',monospace;font-size:14px;color:var(--green)}
+.hud .brand img{width:30px;height:30px;border:2px solid var(--white);image-rendering:pixelated}
+.hud .links{display:flex;gap:14px;text-transform:uppercase}
+.hud .links a::before{content:"[ "}.hud .links a::after{content:" ]"}
+.hud .links a:hover{color:var(--green)}
+.hud .hp{display:flex;align-items:center;gap:8px}
+.hud .bar{width:100px;height:10px;border:2px solid #fff;background:#333}
+.hud .bar i{display:block;height:100%;width:100%;background:var(--green)}
+@media(max-width:760px){.hud .links{display:none}}
+
+/* ===== hero ===== */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;padding:90px 0 28px;position:relative}
+.hero .top{text-align:center;padding:30px 0 0}
+.hero .ps{font-family:'Rubik Mono One',monospace;font-size:clamp(12px,1.6vw,16px);letter-spacing:.3em;animation:blink 1.1s steps(2) infinite;color:var(--g1)}
+@keyframes blink{to{opacity:0}}
+.hero h1{font-size:clamp(34px,7.4vw,92px);margin:12px 0 6px;color:var(--g1);text-shadow:4px 4px 0 var(--white),8px 8px 0 var(--g3)}
+.hero .ticker{display:inline-block;background:var(--g0);color:var(--green);padding:6px 16px;font-family:'Rubik Mono One',monospace;font-size:clamp(14px,2vw,20px);border:3px solid var(--white);outline:3px solid var(--g0)}
+.dlg{position:relative;background:rgba(15,15,15,.96);color:var(--g6);border:4px solid var(--white);outline:4px solid var(--g0);border-radius:8px;padding:22px 26px;display:grid;grid-template-columns:120px 1fr;gap:22px;align-items:start;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.dlg .port{width:120px;height:120px;border:3px solid var(--white);background:#333;overflow:hidden;image-rendering:auto}
+.dlg .port img{width:100%;height:100%;object-fit:cover;object-position:50% 15%}
+.dlg .name{font-family:'Rubik Mono One',monospace;color:var(--green);font-size:13px;letter-spacing:.15em;margin-bottom:8px}
+.dlg .txt{font-size:clamp(16px,2.2vw,22px);min-height:3.2em;line-height:1.5}
+.dlg .txt::after{content:"";display:inline-block;width:.6em;height:1.1em;background:var(--g6);vertical-align:-.15em;margin-left:3px;animation:blink .8s steps(2) infinite}
+.dlg .next{position:absolute;right:18px;bottom:10px;color:var(--green);font-size:18px;animation:bob 1s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(4px)}}
+.dlg .opts{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px}
+.opt{display:inline-block;padding:10px 18px;border:3px solid var(--g6);background:var(--g1);color:var(--g6);font-family:'Rubik Mono One',monospace;font-size:13px;letter-spacing:.05em}
+.opt::before{content:"\25B6  ";color:var(--green)}
+.opt:hover{background:var(--green);color:var(--g0);border-color:var(--g0)}
+.opt.ghost{background:transparent}
+@media(max-width:600px){.dlg{grid-template-columns:1fr}.dlg .port{width:80px;height:80px}}
+
+/* loading bars between scenes */
+.load{display:flex;align-items:center;gap:14px;padding:40px 0 10px;font-family:'Rubik Mono One',monospace;font-size:12px;letter-spacing:.2em;color:var(--g1)}
+.load .bar{flex:1;height:14px;border:3px solid var(--g0);background:var(--g6);position:relative;overflow:hidden}
+.load .bar i{position:absolute;inset:0;width:var(--w,0%);background:repeating-linear-gradient(90deg,var(--green) 0 10px,#27a852 10px 14px);transition:width .4s steps(8)}
+.load .pct{width:4ch;text-align:right}
+
+/* generic "screen" sections */
+section{position:relative;padding:40px 0 60px}
+.scr{background:var(--g6);border:4px solid var(--g0);box-shadow:8px 8px 0 var(--g3);padding:26px;position:relative}
+.scr::before{content:attr(data-title);position:absolute;top:-16px;left:18px;background:var(--g0);color:var(--g6);font-family:'Rubik Mono One',monospace;font-size:12px;letter-spacing:.2em;padding:4px 12px}
+h2{font-size:clamp(22px,4vw,40px);margin-bottom:16px;color:var(--g1)}
+.sub{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--g2);margin-bottom:8px}
+
+/* item obtained: CA */
+.item{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.item .icon{width:76px;height:76px;border:3px solid var(--g0);background:var(--g0);display:grid;place-items:center;color:var(--green);font-family:'Rubik Mono One',monospace;font-size:28px}
+.item .addr{font-size:clamp(13px,2vw,17px);background:var(--white);border:3px solid var(--g0);padding:12px;overflow-wrap:anywhere;margin:8px 0 12px}
+.item .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.copy{background:var(--g0);color:var(--g6);border:3px solid var(--g0);padding:9px 18px;font-family:'Rubik Mono One',monospace;font-size:12px;letter-spacing:.1em}
+.copy:hover{background:var(--green);color:var(--g0)}
+.item .msg{font-size:13px;color:var(--g2)}
+@media(max-width:520px){.item{grid-template-columns:1fr}}
+
+/* lore: stacked dialogue */
+.lore .dlg{margin-bottom:22px;grid-template-columns:90px 1fr}
+.lore .dlg .port{width:90px;height:90px}
+.lore .dlg:nth-child(even){margin-left:min(8vw,80px)}
+.lore .dlg .txt{min-height:0;font-size:clamp(15px,2vw,19px)}
+.lore .dlg .txt::after{display:none}
+.lore .dlg.typing .txt::after{display:inline-block}
+@media(max-width:600px){.lore .dlg{grid-template-columns:1fr}.lore .dlg:nth-child(even){margin-left:0}}
+
+/* stats: tokenomics */
+.stats{display:grid;gap:14px}
+.stat{display:grid;grid-template-columns:140px 1fr;gap:14px;align-items:center}
+.stat .k{font-family:'Rubik Mono One',monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.stat .v{position:relative;border:3px solid var(--g0);background:var(--white);padding:9px 14px;font-weight:600;overflow:hidden}
+.stat .v::before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--f);background:var(--green);opacity:.35}
+.stat .v span{position:relative}
+@media(max-width:520px){.stat{grid-template-columns:1fr;gap:4px}}
+
+/* quest log: how to buy */
+.quest{display:grid;gap:12px}
+.q{display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:start;padding:14px;border:3px solid var(--g0);background:var(--white)}
+.q .box{width:28px;height:28px;border:3px solid var(--g0);display:grid;place-items:center;font-family:'Rubik Mono One',monospace;font-size:14px;color:var(--green)}
+.q h3{font-size:15px;letter-spacing:.05em;margin-bottom:4px}
+.q p{font-size:15px;color:var(--g1)}
+.q a{text-decoration:underline}
+.q.done .box::after{content:"\2713"}
+.q.done h3{text-decoration:line-through;color:var(--g3)}
+
+/* character select: gallery */
+.sel{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.ch{position:relative;border:3px solid var(--g0);background:var(--white);padding:6px;aspect-ratio:1;transform:translate3d(0,calc((var(--sy) - var(--oy,0)) * var(--sp) * -1px),0)}
+.ch img{width:100%;height:100%;object-fit:cover;filter:grayscale(1);transition:filter .2s}
+.ch:hover img{filter:none}
+.ch:hover{outline:4px solid var(--green)}
+.ch .tag{position:absolute;left:6px;bottom:6px;right:6px;background:rgba(15,15,15,.85);color:var(--g6);font-family:'Rubik Mono One',monospace;font-size:10px;letter-spacing:.1em;padding:4px 6px}
+@media(max-width:860px){.sel{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:520px){.sel{grid-template-columns:repeat(2,1fr)}}
+
+/* cutscene */
+.cut video{width:100%;display:block;border:4px solid var(--g0);background:#000}
+.cut .bars{height:26px;background:var(--g0)}
+
+/* buttons band */
+.menu{text-align:center;padding:30px 0}
+.menu .opt{font-size:15px;padding:14px 26px;margin:6px}
+
+footer{position:relative;background:var(--g0);color:var(--g4);padding:50px 0 36px;border-top:4px solid var(--white)}
+.pills{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:26px}
+.pill{padding:8px 16px;border:2px solid var(--g4);font-size:13px;text-transform:uppercase;letter-spacing:.1em}
+.pill:hover{border-color:var(--green);color:var(--green)}
+.disc{max-width:760px;margin:0 auto;font-size:13px;opacity:.7;text-align:center;line-height:1.5}
+.copyright{text-align:center;font-size:12px;opacity:.5;margin-top:14px}
+
+@media(prefers-reduced-motion:reduce){
+  .px,.ch{transform:none!important}
+  .ps,.dlg .next,.dlg .txt::after{animation:none}
+  .load .bar i{transition:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<div class="world" aria-hidden="true">
+  <div class="sun px" style="--sp:.02;--d:-.004"></div>
+  <div class="blocks b1 px" style="--sp:.05;--d:-.008"></div>
+  <div class="crowd c1 px" style="--sp:.08;--d:-.012"></div>
+  <div class="blocks b2 px" style="--sp:.12;--d:-.018"></div>
+  <div class="crowd c2 px" style="--sp:.18;--d:-.025"></div>
+  <div class="blocks b3 px" style="--sp:.24;--d:-.035"></div>
+  <div class="crowd c3 px" style="--sp:.32;--d:-.05"></div>
+  <div class="ground"></div>
+</div>
+
+<div class="hud">
+  <a class="brand" href="#top"><img src="favicon.png" alt="">$NPC</a>
+  <div class="links"><a href="#lore">Lore</a><a href="#stats">Stats</a><a href="#quest">Quest</a><a href="#select">Select</a></div>
+  <div class="hp">HP <div class="bar"><i></i></div> 100/100</div>
+</div>
+
+<div class="page" id="top">
+
+<header class="hero">
+  <div class="wrap top px" style="--sp:.18;--d:.004">
+    <div class="ps">- PRESS START -</div>
+    <h1>NON PLAYER<br>COIN</h1>
+    <div class="ticker">$NPC on Solana</div>
+  </div>
+  <div class="wrap">
+    <div class="dlg" id="heroDlg">
+      <div class="port"><img src="hero.png" alt="The NPC"></div>
+      <div>
+        <div class="name">NPC #000001</div>
+        <div class="txt" id="heroTxt"></div>
+        <div class="opts">
+          <a class="opt" href="#" target="_blank" rel="noopener">Buy $NPC</a>
+          <a class="opt ghost" href="#" target="_blank" rel="noopener">Enter the NPC Lobby</a>
+          <a class="opt ghost" href="#lore">Talk again</a>
+        </div>
+      </div>
+      <div class="next" aria-hidden="true">&#9660;</div>
+    </div>
+  </div>
+</header>
+
+<section id="ca">
+  <div class="wrap">
+    <div class="load"><span>LOADING</span><div class="bar"><i data-load></i></div><span class="pct">0%</span></div>
+    <div class="scr" data-title="ITEM OBTAINED">
+      <div class="item">
+        <div class="icon">CA</div>
+        <div>
+          <div class="sub">Contract address</div>
+          <div class="addr" id="caText">Contract address revealed at launch</div>
+          <div class="row"><button class="copy" id="copyBtn" type="button">COPY</button><span class="msg" id="caMsg">Compare with the CA pinned on X. The NPC will not warn you twice.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="lore" id="lore">
+  <div class="wrap">
+    <div class="load"><span>LOADING</span><div class="bar"><i data-load></i></div><span class="pct">0%</span></div>
+    <div class="sub">Dialogue</div>
+    <h2>Just an NPC</h2>
+    <div class="dlg tw" data-text="Every game has them: the grey characters who walk the same loop, say the same line and never question the script. Non Player Coin is their coin.">
+      <div class="port"><img src="meme_01.jpg" alt=""></div><div><div class="name">NPC (ACCOUNTANT)</div><div class="txt"></div></div>
+    </div>
+    <div class="dlg tw" data-text="The NPC has every job. Accountant, cowboy, boxer, baseball player, yacht guy, guy at the desk with a coffee. Different outfit, same blank stare, same three words: it is what it is.">
+      <div class="port"><img src="meme_02.jpg" alt=""></div><div><div class="name">NPC (COWBOY)</div><div class="txt"></div></div>
+    </div>
+    <div class="dlg tw" data-text="No roadmap, no VC, no team bag. Just a lobby of grey frogs running their daily routine, and maybe this time the background characters get the main quest.">
+      <div class="port"><img src="meme_03.jpg" alt=""></div><div><div class="name">NPC (GUY AT THE DESK)</div><div class="txt"></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="stats">
+  <div class="wrap">
+    <div class="load"><span>LOADING</span><div class="bar"><i data-load></i></div><span class="pct">0%</span></div>
+    <div class="scr" data-title="STATS">
+      <h2>Tokenomics</h2>
+      <div class="stats">
+        <div class="stat"><div class="k">Supply</div><div class="v" style="--f:100%"><span>1,000,000,000</span></div></div>
+        <div class="stat"><div class="k">Launch</div><div class="v" style="--f:72%"><span>Fair launch on pump.fun</span></div></div>
+        <div class="stat"><div class="k">Tax</div><div class="v" style="--f:0%"><span>0% buy / 0% sell</span></div></div>
+        <div class="stat"><div class="k">Liquidity</div><div class="v" style="--f:88%"><span>Auto-migrated &amp; burned by pump.fun</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="quest">
+  <div class="wrap">
+    <div class="load"><span>LOADING</span><div class="bar"><i data-load></i></div><span class="pct">0%</span></div>
+    <div class="scr" data-title="QUEST LOG">
+      <h2>How to buy</h2>
+      <div class="quest">
+        <div class="q"><div class="box">1</div><div><h3>GET A WALLET</h3><p>Install Phantom or Solflare. Save the seed phrase. This is the tutorial. Everyone skips the tutorial.</p></div></div>
+        <div class="q"><div class="box">2</div><div><h3>ACQUIRE SOL</h3><p>Buy SOL on an exchange and send it to your wallet. Keep some for fees. It is what it is.</p></div></div>
+        <div class="q"><div class="box">3</div><div><h3>TRAVEL TO PUMP.FUN</h3><p>Open <a href="#" target="_blank" rel="noopener">the $NPC page</a>, connect the wallet, check the CA matches the one in the Lobby.</p></div></div>
+        <div class="q"><div class="box">4</div><div><h3>SWAP SOL FOR $NPC</h3><p>Enter amount. Confirm. Return to your loop.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="select">
+  <div class="wrap">
+    <div class="load"><span>LOADING</span><div class="bar"><i data-load></i></div><span class="pct">0%</span></div>
+    <div class="sub">Character select</div>
+    <h2>Same face. Every job.</h2>
+    <div class="sel">
+      <div class="ch" style="--sp:.03"><img src="meme_01.jpg" alt="NPC meme 1" loading="lazy"><div class="tag">NPC #001</div></div>
+      <div class="ch" style="--sp:.06"><img src="meme_02.jpg" alt="NPC meme 2" loading="lazy"><div class="tag">NPC #002</div></div>
+      <div class="ch" style="--sp:.02"><img src="meme_03.jpg" alt="NPC meme 3" loading="lazy"><div class="tag">NPC #003</div></div>
+      <div class="ch" style="--sp:.05"><img src="meme_04.jpg" alt="NPC meme 4" loading="lazy"><div class="tag">NPC #004</div></div>
+      <div class="ch" style="--sp:.01"><img src="meme_05.jpg" alt="NPC meme 5" loading="lazy"><div class="tag">NPC #005</div></div>
+      <div class="ch" style="--sp:.04"><img src="meme_06.jpg" alt="NPC meme 6" loading="lazy"><div class="tag">NPC #006</div></div>
+      <div class="ch" style="--sp:.02"><img src="meme_07.jpg" alt="NPC meme 7" loading="lazy"><div class="tag">NPC #007</div></div>
+      <div class="ch" style="--sp:.06"><img src="meme_08.jpg" alt="NPC meme 8" loading="lazy"><div class="tag">NPC #008</div></div>
+      <div class="ch" style="--sp:.03"><img src="meme_09.jpg" alt="NPC meme 9" loading="lazy"><div class="tag">NPC #009</div></div>
+      <div class="ch" style="--sp:.05"><img src="meme_10.jpg" alt="NPC meme 10" loading="lazy"><div class="tag">NPC #010</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="cut" id="cut">
+  <div class="wrap">
+    <div class="load"><span>LOADING</span><div class="bar"><i data-load></i></div><span class="pct">0%</span></div>
+    <div class="sub">Cutscene (skippable)</div>
+    <div class="bars"></div>
+    <video src="clip.mp4" controls muted loop playsinline preload="metadata"></video>
+    <div class="bars"></div>
+  </div>
+</section>
+
+<section class="menu">
+  <div class="wrap">
+    <div class="dlg" style="text-align:left">
+      <div class="port"><img src="logo.png" alt=""></div>
+      <div>
+        <div class="name">NPC LOBBY</div>
+        <div class="txt" style="min-height:0">You are running out of "it is what it is". Are you sure you want to continue?</div>
+        <div class="opts">
+          
+          <a class="opt" href="#" target="_blank" rel="noopener">Yes (buy $NPC)</a>
+          <a class="opt ghost" href="#top">Yes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="pills">
+      <a class="pill" href="#" target="_blank" rel="noopener">X / Twitter</a>
+      
+      <a class="pill" href="#" target="_blank" rel="noopener">pump.fun</a>
+      <a class="pill" href="#" target="_blank" rel="noopener">DexScreener</a>
+    </div>
+    <p class="disc">$NPC is a memecoin with no intrinsic value or expectation of financial return. It is not affiliated with, endorsed by, or connected to any person, brand or company referenced in its memes. There is no team roadmap or promise of profit. Crypto is volatile; only spend what you can afford to lose.</p>
+    <p class="copyright">NPC Lobby. it is what it is.</p>
+  </div>
+</footer>
+</div>
+
+<script>
+(function(){
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root=document.documentElement;
+  var sy=0,mx=0,my=0,ticking=false;
+  var loads=[].slice.call(document.querySelectorAll('.load'));
+  function frame(){
+    ticking=false;
+    root.style.setProperty('--sy',sy.toFixed(1));
+    root.style.setProperty('--mx',mx.toFixed(1));
+    root.style.setProperty('--my',my.toFixed(1));
+    var vh=window.innerHeight;
+    loads.forEach(function(l){
+      var r=l.getBoundingClientRect();
+      var p=Math.min(1,Math.max(0,(vh-r.top)/(vh*.6)));
+      var pct=Math.round(p*100);
+      l.querySelector('[data-load]').style.setProperty('--w',pct+'%');
+      var t=l.querySelector('.pct'); if(t.textContent!==pct+'%') t.textContent=pct+'%';
+      var s=l.querySelector('span'); s.textContent=pct>=100?'READY':'LOADING';
+    });
+  }
+  function req(){ if(!ticking){ticking=true;requestAnimationFrame(frame);} }
+  if(!reduce){
+    window.addEventListener('scroll',function(){sy=window.scrollY||0;req();},{passive:true});
+    window.addEventListener('pointermove',function(e){mx=(e.clientX/window.innerWidth-.5)*400;my=(e.clientY/window.innerHeight-.5)*200;req();},{passive:true});
+    var flow=document.querySelectorAll('.ch');
+    function setOy(){var vh=window.innerHeight;flow.forEach(function(el){var r=el.getBoundingClientRect();el.style.setProperty('--oy',(r.top+window.scrollY+r.height/2-vh/2).toFixed(0));});}
+    setOy(); window.addEventListener('load',setOy); window.addEventListener('resize',function(){setOy();req();});
+  } else { loads.forEach(function(l){l.querySelector('[data-load]').style.setProperty('--w','100%');l.querySelector('.pct').textContent='100%';l.querySelector('span').textContent='READY';}); }
+  sy=window.scrollY||0; req();
+
+  // typewriter
+  function type(el,text,speed,done){
+    if(reduce){el.textContent=text;if(done)done();return;}
+    var i=0; el.textContent='';
+    (function step(){ el.textContent=text.slice(0,++i); if(i<text.length){setTimeout(step,speed);} else if(done){done();} })();
+  }
+  var heroLines=["The grey background character of the internet. Same job, same face, same dialogue. It is what it is.","it is what it is.","gm. same as yesterday.","the background characters are getting the main quest.","it is what it is."];
+  var hi=0, heroTxt=document.getElementById('heroTxt');
+  function heroCycle(){ type(heroTxt,heroLines[hi],28,function(){ hi=(hi+1)%heroLines.length; if(!reduce) setTimeout(heroCycle,2600); }); }
+  heroCycle();
+  var tws=document.querySelectorAll('.tw');
+  if(reduce||!('IntersectionObserver' in window)){ tws.forEach(function(d){d.querySelector('.txt').textContent=d.getAttribute('data-text');}); }
+  else{
+    var io=new IntersectionObserver(function(es){ es.forEach(function(en){ if(en.isIntersecting){ var d=en.target; io.unobserve(d); d.classList.add('typing'); type(d.querySelector('.txt'),d.getAttribute('data-text'),16,function(){d.classList.remove('typing');}); } }); },{threshold:.3});
+    tws.forEach(function(d){io.observe(d);});
+  }
+
+  // copy
+  var CA='';
+  var btn=document.getElementById('copyBtn'),msg=document.getElementById('caMsg');
+  btn.addEventListener('click',function(){
+    if(!CA){msg.textContent='Inventory empty. The CA is added at launch.';return;}
+    try{
+      navigator.clipboard.writeText(CA).then(function(){btn.textContent='COPIED';msg.textContent='CA copied to inventory.';setTimeout(function(){btn.textContent='COPY';},2000);})
+      .catch(function(){msg.textContent='Copy failed. Select the address and copy manually.';});
+    }catch(e){msg.textContent='Copy failed. Select the address and copy manually.';}
+  });
+})();
+</script>
+</body></html>
